@@ -135,3 +135,42 @@
 .issues-list svg{color:#e2a18f;flex:none}
 @media(max-width:900px){.sidebar{width:100%;min-width:0;max-width:none;resize:none}.tree{min-height:calc(100dvh - 180px)}.sidebar-body{overflow:visible}.canvas-backdrop{margin-top:18px}}
 @media(max-width:560px){.sidebar-top{flex-wrap:wrap}.sidebar-top input{width:100%;flex:auto}.sidebar-top-actions{width:100%;justify-content:space-between}.sidebar-top .segmented button{width:27px}.sidebar-body{padding:15px 10px 30px}.selected-editor{padding:0 11px}.category-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Keep the component picker after the full list, including short lists. */
+.tree{min-height:0;padding-bottom:0;margin-bottom:12px}
+.add-wrap{position:relative;display:flex;justify-content:flex-start;padding:0 3px 12px}
+.add-button{padding:8px 4px}
+.add-popover{top:100%;right:auto;left:0}
+
+.type-icon{flex:none;color:#8996ea}
+.type-icon.type-1{color:#b093e7}
+.type-icon.type-2{color:#64c8aa}
+.type-icon.type-3{color:#6ec6d5}
+.type-icon.type-5{color:#94c577}
+.type-icon.type-6{color:#d1a26f}
+.type-icon.type-7{color:#c68fcf}
+.type-icon.type-8{color:#79acd9}
+.type-icon.type-9{color:#e6a48c}
+.type-icon.type-10{color:#a3b5ef}
+.type-icon.type-11{color:#e7b47e}
+.type-icon.type-12{color:#d39fc0}
+.type-icon.type-13{color:#b8c877}
+.type-icon.type-14{color:#95a9b8}
+.type-icon.type-17{color:#a993e2}
+.sidebar-top .icon-button.active{background:#383a3e;color:#f2f2f2}
+
+.main-panel{position:relative}
+.canvas-scroller{overflow-x:auto}
+.canvas-backdrop{max-width:1000px;margin:0 auto;padding:32px}
+.discord-stage.embed-only:not(.mobile){width:min(100%,640px);resize:none}
+.embed-only-content{min-height:110px;padding:22px;display:flex;align-items:flex-start}
+.embed-only-content .message-components{width:100%;max-width:none}
+.discord-stage.mobile .embed-only-content{padding:16px}
+.zoom-indicator{position:absolute;right:18px;bottom:17px;padding:4px 7px;border-radius:5px;background:#26282dcc;color:#d8dade;font-size:11px;font-variant-numeric:tabular-nums;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.zoom-indicator.visible{opacity:.78}
+
+.symbol-cell>button:first-child{position:relative}
+.symbol-copied{position:absolute;inset:3px;display:grid;place-items:center;border-radius:4px;color:#e5e9ed;background:#353a43e8;pointer-events:none;animation:symbol-copy-fade 1s ease-out forwards}
+@keyframes symbol-copy-fade{0%,35%{opacity:1}100%{opacity:0}}
+
+@media(max-width:900px){.tree{min-height:0}.canvas-backdrop{margin:0 auto;padding:20px}}

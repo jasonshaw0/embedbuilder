@@ -1,9 +1,9 @@
 import { ChevronDown, File as FileIcon, Image as ImageIcon, ExternalLink, LockKeyhole } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { renderDiscordMarkdown } from './markdown'
 import { TYPE_NAMES, type Media, type Node, type Project } from './model'
 
-type Props = { project: Project; selectedId?: string; select: (id: string) => void; assetUrls: Record<string, string>; theme: 'dark' | 'light'; viewport: 'desktop' | 'mobile' }
+type Props = { project: Project; selectedId?: string; select: (id: string) => void; assetUrls: Record<string, string>; theme: 'dark' | 'light'; viewport: 'desktop' | 'mobile'; embedOnly: boolean }
 
 function mediaSource(media: Media | undefined, assetUrls: Record<string, string>): string {
   return media?.assetId ? assetUrls[media.assetId] || '' : media?.url || ''
@@ -23,6 +23,13 @@ function MediaTile({ source, description, spoiler, small = false }: { source: st
 }
 function PreviewNode({ node, selectedId, select, assetUrls }: { node: Node; selectedId?: string; select: (id: string) => void; assetUrls: Record<string, string> }) {
   const [open, setOpen] = useState(false)
+  const selectRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (event: PointerEvent) => { if (!selectRef.current?.contains(event.target as globalThis.Node)) setOpen(false) }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [open])
   const active = selectedId === node.uid
   const props = { className: `preview-node preview-${node.type} ${active ? 'selected' : ''}`, 'data-uid': node.uid, onClick: (event: React.MouseEvent) => { event.stopPropagation(); select(node.uid) } }
   switch (node.type) {
@@ -45,23 +52,25 @@ function PreviewNode({ node, selectedId, select, assetUrls }: { node: Node; sele
     case 2: return <button {...props} type="button" className={`${props.className} discord-button button-style-${node.style || 1}`} disabled={node.disabled}>
       {node.emoji?.name && <span>{node.emoji.name}</span>}{node.label || (node.emoji?.name ? '' : 'Button')}{node.style === 5 && <ExternalLink size={14}/>} {node.style === 6 && <span>◆</span>}
     </button>
-    case 3: case 5: case 6: case 7: case 8: return <div {...props} className={`${props.className} discord-select ${node.disabled ? 'disabled' : ''}`} onClick={event => { event.stopPropagation(); select(node.uid); if (!node.disabled) setOpen(!open) }}>
+    case 3: case 5: case 6: case 7: case 8: return <div {...props} ref={selectRef} className={`${props.className} discord-select ${node.disabled ? 'disabled' : ''}`} onClick={event => { event.stopPropagation(); select(node.uid); if (!node.disabled) setOpen(!open) }}>
       <span>{node.placeholder || TYPE_NAMES[node.type]}</span><ChevronDown size={16}/>
       {open && <div className="select-popover" onClick={event => event.stopPropagation()}>{node.type === 3 ? node.options?.map((option, index) => <div className="select-option" key={index}>{option.emoji?.name && <span>{option.emoji.name}</span>}<span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span>{option.default && <span className="option-check">✓</span>}</div>) : <div className="select-option select-dynamic">Discord supplies the available {TYPE_NAMES[node.type].toLowerCase()} options when this message is sent.</div>}</div>}
     </div>
   }
 }
 
-export default function Preview({ project, selectedId, select, assetUrls, theme, viewport }: Props) {
-  return <div className={`discord-stage ${theme} ${viewport}`}>
+export default function Preview({ project, selectedId, select, assetUrls, theme, viewport, embedOnly }: Props) {
+  const components = <div className="message-components">{project.components.map(node => <PreviewNode key={node.uid} node={node} selectedId={selectedId} select={select} assetUrls={assetUrls} />)}</div>
+  return <div className={`discord-stage ${theme} ${viewport} ${embedOnly ? 'embed-only' : ''}`}>
+    {embedOnly ? <div className="embed-only-content">{components}</div> : <>
     <div className="discord-channel"><span className="channel-hash">#</span> component-preview <span className="channel-divider"/> <span className="channel-subtitle">A live layout simulation</span></div>
     <div className="discord-chat">
       <div className="discord-avatar">CS</div>
       <div className="discord-message">
         <div className="message-meta"><strong>Component Studio</strong><span className="bot-badge">APP</span><time>Today at 12:34 PM</time></div>
-        <div className="message-components">{project.components.map(node => <PreviewNode key={node.uid} node={node} selectedId={selectedId} select={select} assetUrls={assetUrls} />)}</div>
+        {components}
       </div>
     </div>
-    <div className="discord-chat-bottom"><span>＋</span> Message #component-preview</div>
+    <div className="discord-chat-bottom"><span>＋</span> Message #component-preview</div></>}
   </div>
 }

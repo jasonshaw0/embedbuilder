@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Baseline, Bold, Code, EyeOff, Heading1, Heading2, Heading3, Italic, List, ListOrdered, Quote, ScanText, Strikethrough, Underline } from 'lucide-react'
 import { plainText, STYLE_NAMES, styleText } from './symbols'
 import { normalizeSingleTildes, toggleCodeBlock, toggleLines, toggleMarkers, type FormatAction, type Keybindings, type TextSelection } from './textFormatting'
@@ -13,6 +13,19 @@ export default function TextEditor({ content, change, openSymbols, keybindings }
   const pendingSelection = useRef<TextSelection | null>(null)
   const [fontOpen, setFontOpen] = useState(false)
   const [headingOpen, setHeadingOpen] = useState(false)
+  const toolbar = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const closeMenus = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!toolbar.current?.contains(target) || !(target as Element).closest?.('.toolbar-menu')) {
+        setFontOpen(false)
+        setHeadingOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', closeMenus)
+    return () => document.removeEventListener('pointerdown', closeMenus)
+  }, [])
 
   useLayoutEffect(() => {
     if (!pendingSelection.current || !editor.current) return
@@ -54,7 +67,7 @@ export default function TextEditor({ content, change, openSymbols, keybindings }
   const control = (label: string, icon: React.ReactNode, action: () => void, active = false) => <button type="button" title={label} aria-label={label} className={active ? 'active' : ''} onMouseDown={event => event.preventDefault()} onClick={action}>{icon}</button>
 
   return <div className="text-editor">
-    <div className="editor-toolbar" role="toolbar" aria-label="Text formatting">
+    <div ref={toolbar} className="editor-toolbar" role="toolbar" aria-label="Text formatting">
       {control('Bold', <Bold size={16}/>, () => format('bold'))}
       {control('Italic', <Italic size={16}/>, () => format('italic'))}
       {control('Underline', <Underline size={16}/>, () => format('underline'))}
