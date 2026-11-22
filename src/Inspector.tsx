@@ -1,6 +1,7 @@
 import { ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { CHANNEL_TYPES, SELECT_TYPES, TYPE_NAMES, makeNode, type Media, type Node, type SelectOption } from './model'
-import TextEditor, { type Keybindings } from './TextEditor'
+import TextEditor from './TextEditor'
+import { type Keybindings } from './textFormatting'
 
 type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void; openSymbols: () => void; keybindings: Keybindings }
 

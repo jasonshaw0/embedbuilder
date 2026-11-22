@@ -1,4 +1,7 @@
 export type TextSelection = { start: number; end: number }
+export type FormatAction = 'bold' | 'italic' | 'underline' | 'strike'
+export type Keybindings = Record<FormatAction, string>
+export const DEFAULT_KEYBINDINGS: Keybindings = { bold: 'b', italic: 'i', underline: 'u', strike: 's' }
 
 export function toggleMarkers(content: string, selection: TextSelection, marker: string): { content: string; selection: TextSelection } {
   const { start, end } = selection

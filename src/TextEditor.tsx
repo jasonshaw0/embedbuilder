@@ -1,11 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Baseline, Bold, Code, EyeOff, Heading1, Heading2, Heading3, Italic, List, ListOrdered, Quote, ScanText, Strikethrough, Underline } from 'lucide-react'
 import { plainText, STYLE_NAMES, styleText } from './symbols'
-import { normalizeSingleTildes, toggleCodeBlock, toggleLines, toggleMarkers, type TextSelection } from './textFormatting'
+import { normalizeSingleTildes, toggleCodeBlock, toggleLines, toggleMarkers, type FormatAction, type Keybindings, type TextSelection } from './textFormatting'
 
-export type FormatAction = 'bold' | 'italic' | 'underline' | 'strike'
-export type Keybindings = Record<FormatAction, string>
-export const DEFAULT_KEYBINDINGS: Keybindings = { bold: 'b', italic: 'i', underline: 'u', strike: 's' }
 const MARKERS: Record<FormatAction, string> = { bold: '**', italic: '*', underline: '__', strike: '~~' }
 
 type Props = { content: string; change: (content: string) => void; openSymbols: () => void; keybindings: Keybindings }
