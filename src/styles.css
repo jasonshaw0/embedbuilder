@@ -174,3 +174,76 @@
 @keyframes symbol-copy-fade{0%,35%{opacity:1}100%{opacity:0}}
 
 @media(max-width:900px){.tree{min-height:0}.canvas-backdrop{margin:0 auto;padding:20px}}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    color: #e3e6e8;
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap
+}
+
+.sidebar-brand-mark {
+    width: 27px;
+    height: 27px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #263b32;
+    color: #8ed8ab
+}
+
+.sidebar-top-actions .preview-cycle {
+    color: #bdc4cb
+}
+
+.sidebar-heading>div {
+    gap: 8px
+}
+
+.sidebar-heading .add-wrap {
+    width: 31px;
+    height: 31px;
+    margin: 0;
+    padding: 0;
+    display: block;
+    flex: none;
+    z-index: 9
+}
+
+.sidebar-heading .add-button {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #3ba66d;
+    color: #fff;
+    box-shadow: 0 2px 7px #0003
+}
+
+.sidebar-heading .add-button:hover {
+    background: #4abb7d
+}
+
+.sidebar-heading .add-popover {
+    top: calc(100% + 4px);
+    left: 0;
+    right: auto;
+    width: min(350px, calc(100vw - 40px));
+    margin: 0
+}
+
+.preview-setting input {
+    accent-color: #4abb7d;
+    width: 17px;
+    height: 17px;
+    margin: 0
+}
