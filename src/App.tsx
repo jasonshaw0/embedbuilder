@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertCircle, ArrowDown, ArrowUp, Check, ChevronDown, CircleHelp, Clipboard, Code2, Download, FileInput, GalleryHorizontal, GripVertical, LayoutGrid, Library, Menu, Monitor, Moon, MoreHorizontal, Plus, Redo2, RotateCcw, Search, Smartphone, Sparkles, Sun, Trash2, Undo2, X } from 'lucide-react'
+import { AlertCircle, ArrowDown, ArrowUp, Check, ChevronDown, CircleHelp, Clipboard, Code2, Download, FileInput, GalleryHorizontal, GripVertical, LayoutGrid, Monitor, Moon, MoreHorizontal, PanelsTopLeft, Plus, Redo2, RotateCcw, Rows3, ScanText, Search, Smartphone, Sun, Trash2, Undo2, X } from 'lucide-react'
 import Inspector from './Inspector'
 import Preview from './Preview'
 import { CONTAINER_CHILDREN, SELECT_TYPES, TOP_LEVEL, TYPE_NAMES, allowedChildren, containsNode, exampleProject, findNode, fromPayload, insertNode, makeNode, removeNode, templateProject, toPayload, updateNode, walk, type Asset, type Media, type Node, type NodeType, type Project } from './model'
@@ -22,7 +22,7 @@ function parentInfo(nodes: Node[], id: string, parent?: Node): { parent?: Node; 
 
 function TreeItem({ node, depth, selectedId, select, onMove, onDropNode, issues }: { node: Node; depth: number; selectedId?: string; select: (id: string) => void; onMove: (id: string, direction: -1 | 1) => void; onDropNode: (dragged: string, target: string) => void; issues: Set<string> }) {
   return <>
-    <div className={`tree-item ${selectedId === node.uid ? 'active' : ''}`} style={{ paddingLeft: 11 + depth * 17 }} draggable onDragStart={event => { event.dataTransfer.setData('text/plain', node.uid); event.dataTransfer.effectAllowed = 'move' }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); event.stopPropagation(); onDropNode(event.dataTransfer.getData('text/plain'), node.uid) }} onClick={() => select(node.uid)}>
+    <div className={`tree-item ${selectedId === node.uid ? 'active' : ''}`} style={{ paddingLeft: 11 + depth * 17 }} role="button" tabIndex={0} aria-label={`${TYPE_NAMES[node.type]} component; Alt and arrow keys reorder`} draggable onDragStart={event => { event.dataTransfer.setData('text/plain', node.uid); event.dataTransfer.effectAllowed = 'move' }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); event.stopPropagation(); onDropNode(event.dataTransfer.getData('text/plain'), node.uid) }} onClick={() => select(node.uid)} onKeyDown={event => { if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) { event.preventDefault(); onMove(node.uid, event.key === 'ArrowUp' ? -1 : 1) } else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(node.uid) } }}>
       <GripVertical className="tree-grip" size={14}/><span className={`tree-type-dot type-${node.type}`}/><span className="tree-name">{TYPE_NAMES[node.type]}</span>{issues.has(node.uid) && <AlertCircle className="tree-error" size={14}/>}<span className="tree-actions"><button title="Move up" onClick={event => { event.stopPropagation(); onMove(node.uid, -1) }}><ArrowUp size={13}/></button><button title="Move down" onClick={event => { event.stopPropagation(); onMove(node.uid, 1) }}><ArrowDown size={13}/></button></span>
     </div>
     {node.components?.map(child => <TreeItem key={child.uid} node={child} depth={depth + 1} selectedId={selectedId} select={select} onMove={onMove} onDropNode={onDropNode} issues={issues}/>)}
@@ -199,12 +199,12 @@ export default function App() {
         commit(imported.project)
       } else {
         const incoming = JSON.parse(await file.text())
-        commit(incoming.version === 1 ? parseProject(incoming) : fromPayload(incoming))
+        commit(incoming.version === 1 ? parseProject(incoming) : parseProject(fromPayload(incoming)))
       }
       setSelectedId(undefined); setImportOpen(false); notify('Project imported.')
     } catch (error) { notify(error instanceof Error ? error.message : 'Could not import the file.') }
   }
-  const importPasted = () => { try { commit(fromPayload(JSON.parse(importText))); setSelectedId(undefined); setImportOpen(false); setImportText(''); notify('Components imported.') } catch (error) { notify(error instanceof Error ? error.message : 'Invalid JSON.') } }
+  const importPasted = () => { try { commit(parseProject(fromPayload(JSON.parse(importText)))); setSelectedId(undefined); setImportOpen(false); setImportText(''); notify('Components imported.') } catch (error) { notify(error instanceof Error ? error.message : 'Invalid JSON.') } }
   const applyTemplate = (kind: 'announcement' | 'menu' | 'gallery') => { commit(templateProject(kind)); setSelectedId(undefined); notify('Template loaded. Undo restores the previous draft.') }
   const symbolList = symbolQuery.trim() ? Object.values(SYMBOLS).flat().filter((symbol, index, all) => all.indexOf(symbol) === index && (symbol.includes(symbolQuery.trim()) || `U+${symbol.codePointAt(0)?.toString(16).toUpperCase()}`.includes(symbolQuery.trim().toUpperCase()))) : symbolCategory === 'Favorites' ? favorites : symbolCategory === 'Recent' ? recent : SYMBOLS[symbolCategory] || []
 
@@ -217,7 +217,7 @@ export default function App() {
 
     <div className="workspace">
       <aside className={`sidebar ${mobilePane === 'library' ? 'mobile-visible' : ''}`}>
-        <div className="sidebar-tabs"><button className={sidebarTab === 'components' ? 'active' : ''} onClick={() => setSidebarTab('components')}><LayoutGrid size={16}/> Blocks</button><button className={sidebarTab === 'symbols' ? 'active' : ''} onClick={() => setSidebarTab('symbols')}><Sparkles size={16}/> Symbols</button><button className={sidebarTab === 'templates' ? 'active' : ''} onClick={() => setSidebarTab('templates')}><Library size={16}/> Kits</button></div>
+        <div className="sidebar-tabs"><button className={sidebarTab === 'components' ? 'active' : ''} onClick={() => setSidebarTab('components')}><LayoutGrid size={16}/> Blocks</button><button className={sidebarTab === 'symbols' ? 'active' : ''} onClick={() => setSidebarTab('symbols')}><ScanText size={16}/> Symbols</button><button className={sidebarTab === 'templates' ? 'active' : ''} onClick={() => setSidebarTab('templates')}><PanelsTopLeft size={16}/> Kits</button></div>
         <div className="sidebar-body">
           {sidebarTab === 'components' && <>
             <div className="sidebar-heading"><span className="eyebrow">STRUCTURE</span><span className="component-count">{(() => { let count = 0; walk(project.components, () => count++); return count })()}/40</span></div>
@@ -233,7 +233,7 @@ export default function App() {
             {!symbolList.length && <p className="muted-note">No symbols in this collection yet.</p>}
             <div className="style-tool"><span className="eyebrow">STYLED UNICODE</span><p>Convert letters into Unicode variants. Discord still controls the font.</p><input aria-label="Text to style" value={styleInput} onChange={event => setStyleInput(event.target.value)}/><select aria-label="Unicode style" value={styleName} onChange={event => setStyleName(event.target.value)}>{STYLE_NAMES.map(name => <option key={name}>{name}</option>)}</select><div className="styled-result">{styleText(styleInput, styleName)}</div><div className="child-actions"><button className="subtle-button" onClick={() => insertText(styleText(styleInput, styleName))}>Insert</button><button className="subtle-button" onClick={() => copy(styleText(styleInput, styleName))}><Clipboard size={14}/> Copy</button></div><small>Styled characters may be difficult for screen readers and may not exist in every font.</small></div>
           </>}
-          {sidebarTab === 'templates' && <div className="templates-panel"><span className="eyebrow">STARTER KITS</span><h3>Start with a layout.</h3><p>Each kit is editable. Loading one replaces the current canvas; Undo brings it back.</p>{([['announcement','Announcement','Text, section, divider, and link'],['menu','Interactive menu','Container with a string select'],['gallery','Media gallery','Image grid with captions']] as const).map(([key,title,description]) => <button className="template-card" key={key} onClick={() => applyTemplate(key)}><span className="template-art">{key === 'gallery' ? <GalleryHorizontal size={24}/> : key === 'menu' ? <Menu size={24}/> : <Sparkles size={24}/>}</span><span><strong>{title}</strong><small>{description}</small></span><Plus size={16}/></button>)}<button className="subtle-button full" onClick={() => { commit({ version: 1, name: 'Untitled message', components: [] }); setSelectedId(undefined) }}>Start with a blank canvas</button></div>}
+          {sidebarTab === 'templates' && <div className="templates-panel"><span className="eyebrow">STARTER KITS</span><h3>Start with a layout.</h3><p>Each kit is editable. Loading one replaces the current canvas; Undo brings it back.</p>{([['announcement','Announcement','Text, section, divider, and link'],['menu','Interactive menu','Container with a string select'],['gallery','Media gallery','Image grid with captions']] as const).map(([key,title,description]) => <button className="template-card" key={key} onClick={() => applyTemplate(key)}><span className="template-art">{key === 'gallery' ? <GalleryHorizontal size={24}/> : key === 'menu' ? <Rows3 size={24}/> : <PanelsTopLeft size={24}/>}</span><span><strong>{title}</strong><small>{description}</small></span><Plus size={16}/></button>)}<button className="subtle-button full" onClick={() => { commit({ version: 1, name: 'Untitled message', components: [] }); setSelectedId(undefined) }}>Start with a blank canvas</button></div>}
         </div>
       </aside>
 

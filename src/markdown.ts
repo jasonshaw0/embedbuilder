@@ -2,20 +2,27 @@ import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({ html: false, linkify: true, breaks: true, typographer: false })
 md.validateLink = url => /^(https?:|mailto:)/i.test(url)
-md.inline.ruler.before('emphasis', 'discord_spoiler', (state, silent) => {
-  if (state.src.slice(state.pos, state.pos + 2) !== '||') return false
-  const end = state.src.indexOf('||', state.pos + 2)
-  if (end < 0) return false
-  if (!silent) {
-    const open = state.push('spoiler_open', 'span', 1); open.attrSet('class', 'discord-spoiler')
-    const content = state.push('text', '', 0); content.content = state.src.slice(state.pos + 2, end)
-    state.push('spoiler_close', 'span', -1)
+function timestamp(unix: string, style = 'f'): string {
+  const date = new Date(Number(unix) * 1000)
+  if (Number.isNaN(date.getTime())) return 'Invalid date'
+  if (style === 'R') {
+    const delta = Math.round((date.getTime() - Date.now()) / 1000)
+    const units: [Intl.RelativeTimeFormatUnit, number][] = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]]
+    const [unit, seconds] = units.find(([, threshold]) => Math.abs(delta) >= threshold) || units[5]
+    return new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(Math.round(delta / seconds), unit)
   }
-  state.pos = end + 2
-  return true
-})
-md.renderer.rules.spoiler_open = () => '<span class="discord-spoiler" tabindex="0">'
-md.renderer.rules.spoiler_close = () => '</span>'
+  const options: Intl.DateTimeFormatOptions = style === 't' ? { hour: 'numeric', minute: '2-digit' } : style === 'T' ? { hour: 'numeric', minute: '2-digit', second: '2-digit' } : style === 'd' ? { year: 'numeric', month: '2-digit', day: '2-digit' } : style === 'D' ? { year: 'numeric', month: 'long', day: 'numeric' } : style === 'F' ? { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' } : { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+  return new Intl.DateTimeFormat(undefined, options).format(date)
+}
+md.renderer.rules.text = (tokens, index) => md.utils.escapeHtml(tokens[index].content)
+  .replace(/&lt;(a?):([a-zA-Z0-9_]+):(\d+)&gt;/g, (_, animated: string, name: string, id: string) => `<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/${id}.${animated ? 'gif' : 'webp'}" alt=":${name}:" />`)
+  .replace(/&lt;t:(\d+)(?::([tTdDfFR]))?&gt;/g, (_, unix: string, style: string) => `<span class="discord-timestamp">${timestamp(unix, style)}</span>`)
+  .replace(/&lt;@!?\d+&gt;/g, '<span class="discord-mention">@user</span>')
+  .replace(/&lt;@&amp;\d+&gt;/g, '<span class="discord-mention">@role</span>')
+  .replace(/&lt;#\d+&gt;/g, '<span class="discord-mention">#channel</span>')
+  .replace(/\|\|([^|]+?)\|\|/g, '<span class="discord-spoiler" tabindex="0">$1</span>')
+md.renderer.rules.strong_open = (tokens, index) => tokens[index].markup === '__' ? '<u>' : '<strong>'
+md.renderer.rules.strong_close = (tokens, index) => tokens[index].markup === '__' ? '</u>' : '</strong>'
 
 export function renderDiscordMarkdown(source: string): string {
   // Discord's subtext marker is line-oriented and does not have a MarkdownIt equivalent.

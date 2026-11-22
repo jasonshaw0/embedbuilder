@@ -60,15 +60,39 @@ export function parseProject(input: unknown): Project {
   if (!input || typeof input !== 'object') throw new Error('Invalid project file.')
   const project = input as Project
   if (project.version !== 1 || typeof project.name !== 'string' || !Array.isArray(project.components)) throw new Error('Unsupported project format.')
+  const uids = new Set<string>()
+  const checkMedia = (media: unknown): void => {
+    if (!media || typeof media !== 'object' || typeof (media as Record<string, unknown>).url !== 'string') throw new Error('Project contains an invalid media reference.')
+    const assetId = (media as Record<string, unknown>).assetId
+    if (assetId !== undefined && typeof assetId !== 'string') throw new Error('Project contains an invalid asset ID.')
+  }
   const check = (node: unknown): void => {
     if (!node || typeof node !== 'object') throw new Error('Project contains an invalid component.')
     const value = node as Record<string, unknown>
     if (typeof value.uid !== 'string' || typeof value.type !== 'number' || !(value.type in TYPE_NAMES)) throw new Error('Project contains an invalid component.')
+    if (uids.has(value.uid)) throw new Error('Project has duplicate component IDs.')
+    uids.add(value.uid)
     if (value.components !== undefined) {
       if (!Array.isArray(value.components)) throw new Error('Project contains invalid child components.')
       value.components.forEach(check)
     }
     if (value.accessory !== undefined) check(value.accessory)
+    if (value.media !== undefined) checkMedia(value.media)
+    if (value.file !== undefined) checkMedia(value.file)
+    if (value.items !== undefined) {
+      if (!Array.isArray(value.items)) throw new Error('Project contains an invalid media gallery.')
+      value.items.forEach(item => { if (!item || typeof item !== 'object') throw new Error('Project contains an invalid gallery item.'); checkMedia((item as Record<string, unknown>).media) })
+    }
+    if (value.options !== undefined) {
+      if (!Array.isArray(value.options)) throw new Error('Project contains invalid select options.')
+      value.options.forEach(option => { if (!option || typeof option !== 'object' || typeof option.label !== 'string' || typeof option.value !== 'string') throw new Error('Project contains an invalid select option.') })
+    }
+    if (value.default_values !== undefined) {
+      if (!Array.isArray(value.default_values)) throw new Error('Project contains invalid default selections.')
+      value.default_values.forEach(entry => { if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || !['user','role','channel'].includes(entry.type)) throw new Error('Project contains an invalid default selection.') })
+    }
+    if (value.channel_types !== undefined && (!Array.isArray(value.channel_types) || value.channel_types.some(entry => typeof entry !== 'number'))) throw new Error('Project contains invalid channel types.')
+    if (value.content !== undefined && typeof value.content !== 'string') throw new Error('Project contains invalid text content.')
   }
   project.components.forEach(check)
   return project

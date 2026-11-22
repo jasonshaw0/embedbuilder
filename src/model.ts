@@ -69,7 +69,7 @@ export function exampleProject(): Project {
   const section = makeNode(9); section.components![0].content = '**Create with confidence**\nCompose rich layouts, insert symbols, and inspect the Discord result as you go.'
   const thumbnail = section.accessory!; thumbnail.media = { url: 'https://cdn.discordapp.com/embed/avatars/0.png' }; thumbnail.description = 'Discord-style illustration'
   const divider = makeNode(14)
-  const note = makeNode(10); note.content = '✦  Every component below is editable. Select a block to get started.'
+  const note = makeNode(10); note.content = '▸  Every component below is editable. Select a block to get started.'
   const row = makeNode(1); row.components![0].label = 'Documentation'; row.components![0].style = 5; row.components![0].url = 'https://docs.discord.com/developers/components/overview'; delete row.components![0].custom_id
   const container = makeNode(17); container.components = [title, section, divider, note, row]
   return { version: 1, name: 'Welcome message', components: [container] }
@@ -197,6 +197,12 @@ export function fromApiNode(input: unknown): Node {
   const raw = input as Record<string, unknown>
   const type = Number(raw.type) as NodeType
   if (!(type in TYPE_NAMES)) throw new Error(`Unsupported component type ${raw.type}. Nothing was imported.`)
+  for (const field of ['components', 'items', 'options', 'default_values', 'channel_types']) {
+    if (raw[field] !== undefined && !Array.isArray(raw[field])) throw new Error(`${TYPE_NAMES[type]} has an invalid ${field} field. Nothing was imported.`)
+  }
+  for (const field of ['media', 'file', 'accessory']) {
+    if (raw[field] !== undefined && (typeof raw[field] !== 'object' || raw[field] === null)) throw new Error(`${TYPE_NAMES[type]} has an invalid ${field} field. Nothing was imported.`)
+  }
   const node: Node = { uid: uid(), type }
   if (typeof raw.id === 'number') node.apiId = raw.id
   const fields = ['content','accent_color','spoiler','divider','spacing','description','style','label','custom_id','url','sku_id','disabled','placeholder','min_values','max_values','channel_types','default_values'] as const

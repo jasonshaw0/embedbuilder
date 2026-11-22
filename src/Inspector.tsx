@@ -1,4 +1,4 @@
-import { ImagePlus, Plus, Trash2 } from 'lucide-react'
+import { ImagePlus, PanelsTopLeft, Plus, Trash2 } from 'lucide-react'
 import { CHANNEL_TYPES, SELECT_TYPES, TYPE_NAMES, makeNode, type Media, type Node, type SelectOption } from './model'
 
 type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void }
@@ -29,6 +29,7 @@ function OptionEditor({ options, change }: { options: SelectOption[]; change: (o
       <Field label="Value"><input value={option.value} maxLength={100} onChange={event => update(index, { value: event.target.value })}/></Field>
       <Field label="Description"><input value={option.description || ''} maxLength={100} onChange={event => update(index, { description: event.target.value })}/></Field>
       <Field label="Emoji"><input value={option.emoji?.name || ''} placeholder="Optional" onChange={event => update(index, { emoji: event.target.value ? { name: event.target.value } : undefined })}/></Field>
+      {option.emoji?.name && <><Field label="Custom emoji ID"><input value={option.emoji.id || ''} placeholder="Leave blank for Unicode emoji" onChange={event => update(index, { emoji: { ...option.emoji!, id: event.target.value || undefined } })}/></Field><Toggle label="Animated emoji" checked={option.emoji.animated} change={value => update(index, { emoji: { ...option.emoji!, animated: value } })}/></>}
       <Toggle label="Selected by default" checked={option.default} change={value => update(index, { default: value })}/>
     </div>)}
     <button className="subtle-button full" disabled={options.length >= 25} onClick={() => change([...options, { label: `Option ${options.length + 1}`, value: `option_${options.length + 1}` }])}><Plus size={15}/> Add option</button>
@@ -36,7 +37,7 @@ function OptionEditor({ options, change }: { options: SelectOption[]; change: (o
 }
 
 export default function Inspector({ node, change, attach, remove, addChild }: Props) {
-  if (!node) return <div className="inspector-empty"><div className="empty-icon">✦</div><h3>Select a component</h3><p>Click anything in the preview or component tree to customize it.</p></div>
+  if (!node) return <div className="inspector-empty"><div className="empty-icon"><PanelsTopLeft size={26}/></div><h3>Select a component</h3><p>Click anything in the preview or component tree to customize it.</p></div>
   const patch = (value: Partial<Node>) => change({ ...node, ...value })
   const isSelect = SELECT_TYPES.includes(node.type)
   return <div className="inspector-form">
@@ -72,7 +73,10 @@ export default function Inspector({ node, change, attach, remove, addChild }: Pr
         <div className="field-grid"><NumberField label="Minimum" min={0} max={25} value={node.min_values} change={value => patch({ min_values: value })}/><NumberField label="Maximum" min={1} max={25} value={node.max_values} change={value => patch({ max_values: value })}/></div>
         <Toggle label="Disabled" checked={node.disabled} change={value => patch({ disabled: value })}/>
         {node.type === 8 && <Field label="Channel types" hint="Choose the Discord channel types shown in the menu."><div className="channel-types">{CHANNEL_TYPES.map(type => <label key={type}><input type="checkbox" checked={node.channel_types?.includes(type) || false} onChange={event => patch({ channel_types: event.target.checked ? [...(node.channel_types || []), type] : node.channel_types?.filter(value => value !== type) })}/>{type === 0 ? 'Text' : type === 2 ? 'Voice' : type === 4 ? 'Category' : type === 5 ? 'News' : type === 15 ? 'Forum' : `Type ${type}`}</label>)}</div></Field>}
-        {node.type !== 3 && <Field label="Default selections" hint="One Discord ID per line. User, role, or channel according to this select type."><textarea rows={3} placeholder="Discord IDs, one per line" value={(node.default_values || []).map(value => value.id).join('\n')} onChange={event => patch({ default_values: event.target.value.split('\n').map(value => value.trim()).filter(Boolean).map(id => ({ id, type: node.type === 6 ? 'role' : node.type === 8 ? 'channel' : 'user' })) })}/></Field>}
+        {node.type !== 3 && <Field label="Default selections" hint={node.type === 7 ? 'One entry per line: user:ID or role:ID.' : 'One Discord ID per line.'}><textarea rows={3} placeholder={node.type === 7 ? 'user:123456789\nrole:987654321' : 'Discord IDs, one per line'} value={(node.default_values || []).map(value => node.type === 7 ? `${value.type}:${value.id}` : value.id).join('\n')} onChange={event => patch({ default_values: event.target.value.split('\n').map(value => value.trim()).filter(Boolean).map(value => {
+          if (node.type === 7) { const [type, id] = value.includes(':') ? value.split(':', 2) : ['user', value]; return { id, type: type === 'role' ? 'role' as const : 'user' as const } }
+          return { id: value, type: node.type === 6 ? 'role' as const : node.type === 8 ? 'channel' as const : 'user' as const }
+        }) })}/></Field>}
       </>}
     </section>
     {node.type === 3 && <OptionEditor options={node.options || []} change={options => patch({ options })}/>}

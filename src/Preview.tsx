@@ -1,4 +1,5 @@
 import { ChevronDown, File as FileIcon, Image as ImageIcon, ExternalLink, LockKeyhole } from 'lucide-react'
+import { useState } from 'react'
 import { renderDiscordMarkdown } from './markdown'
 import { TYPE_NAMES, type Media, type Node, type Project } from './model'
 
@@ -12,7 +13,7 @@ function Markdown({ content }: { content: string }) {
     const target = event.target as HTMLElement
     if (target.classList.contains('discord-spoiler')) target.classList.toggle('revealed')
     if (target.closest('a')) event.preventDefault()
-  }} />
+  }} onKeyDown={event => { if ((event.key === 'Enter' || event.key === ' ') && (event.target as HTMLElement).classList.contains('discord-spoiler')) { event.preventDefault(); (event.target as HTMLElement).classList.toggle('revealed') } }} />
 }
 function MediaTile({ source, description, spoiler, small = false }: { source: string; description?: string; spoiler?: boolean; small?: boolean }) {
   return <div className={`media-tile ${small ? 'small' : ''} ${spoiler ? 'media-spoiler' : ''}`} onClick={event => { if (spoiler) (event.currentTarget as HTMLElement).classList.toggle('revealed') }}>
@@ -21,6 +22,7 @@ function MediaTile({ source, description, spoiler, small = false }: { source: st
   </div>
 }
 function PreviewNode({ node, selectedId, select, assetUrls }: { node: Node; selectedId?: string; select: (id: string) => void; assetUrls: Record<string, string> }) {
+  const [open, setOpen] = useState(false)
   const active = selectedId === node.uid
   const props = { className: `preview-node preview-${node.type} ${active ? 'selected' : ''}`, 'data-uid': node.uid, onClick: (event: React.MouseEvent) => { event.stopPropagation(); select(node.uid) } }
   switch (node.type) {
@@ -41,11 +43,11 @@ function PreviewNode({ node, selectedId, select, assetUrls }: { node: Node; sele
     case 13: return <div {...props} className={`${props.className} discord-file`}><span className="file-icon"><FileIcon size={21}/></span><span className="file-copy"><strong>{node.file?.url || 'Attach a file'}</strong><small>Attachment</small></span>{node.spoiler && <LockKeyhole size={16}/>}</div>
     case 1: return <div {...props} className={`${props.className} discord-actions`}>{node.components?.map(child => <PreviewNode key={child.uid} node={child} selectedId={selectedId} select={select} assetUrls={assetUrls} />)}</div>
     case 2: return <button {...props} type="button" className={`${props.className} discord-button button-style-${node.style || 1}`} disabled={node.disabled}>
-      {node.emoji?.name && <span>{node.emoji.name}</span>}{node.label || (node.emoji?.name ? '' : 'Button')}{node.style === 5 && <ExternalLink size={14}/>} {node.style === 6 && <span>✦</span>}
+      {node.emoji?.name && <span>{node.emoji.name}</span>}{node.label || (node.emoji?.name ? '' : 'Button')}{node.style === 5 && <ExternalLink size={14}/>} {node.style === 6 && <span>◆</span>}
     </button>
-    case 3: case 5: case 6: case 7: case 8: return <div {...props} className={`${props.className} discord-select ${node.disabled ? 'disabled' : ''}`}>
+    case 3: case 5: case 6: case 7: case 8: return <div {...props} className={`${props.className} discord-select ${node.disabled ? 'disabled' : ''}`} onClick={event => { event.stopPropagation(); select(node.uid); if (!node.disabled) setOpen(!open) }}>
       <span>{node.placeholder || TYPE_NAMES[node.type]}</span><ChevronDown size={16}/>
-      {node.type === 3 && <div className="select-hint">{node.options?.length || 0} option{node.options?.length === 1 ? '' : 's'}</div>}
+      {open && <div className="select-popover" onClick={event => event.stopPropagation()}>{node.type === 3 ? node.options?.map((option, index) => <div className="select-option" key={index}>{option.emoji?.name && <span>{option.emoji.name}</span>}<span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span>{option.default && <span className="option-check">✓</span>}</div>) : <div className="select-option select-dynamic">Discord supplies the available {TYPE_NAMES[node.type].toLowerCase()} options when this message is sent.</div>}</div>}
     </div>
   }
 }
