@@ -15,7 +15,8 @@ Open the local URL printed by Vite. `npm test` checks message export and project
 
 - All [documented message components](https://docs.discord.com/developers/components/reference): containers, sections, text displays, separators, media galleries, files, thumbnails, action rows, buttons, and message select menus.
 - A close Discord-style preview at desktop and mobile widths, with dark and light themes. Click a component in the tree or preview to edit it. Drag tree items to reorder them; use Alt+Up or Alt+Down when focused on a tree item.
-- Searchable symbol categories, favorites, recent symbols, and Unicode alphabet styles. Insert symbols into a selected text display or copy styled text.
+- A text toolbar for Markdown formatting, lists, headings, code, spoilers, symbols, and Unicode alphabet styles applied to selected text. Bold, italic, underline, and strikethrough shortcuts can be changed in Settings.
+- Searchable symbol categories, favorites, and recent symbols. The font menu changes selected characters to Unicode alphabet variants that can be exported as plain Discord text.
 - Browser autosave and versioned project ZIP files containing local attachments. The ZIP also contains `message.json` and `send.ts` for handoff.
 - Import existing Components V2 message JSON or a Component Studio project bundle. Unsupported fields are reported instead of being silently dropped.
 

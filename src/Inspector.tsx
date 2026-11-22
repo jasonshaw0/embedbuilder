@@ -1,7 +1,8 @@
-import { ImagePlus, Plus, ScanText, Trash2 } from 'lucide-react'
+import { ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { CHANNEL_TYPES, SELECT_TYPES, TYPE_NAMES, makeNode, type Media, type Node, type SelectOption } from './model'
+import TextEditor, { type Keybindings } from './TextEditor'
 
-type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void; openSymbols: () => void }
+type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void; openSymbols: () => void; keybindings: Keybindings }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return <label className="field"><span className="field-label">{label}</span>{children}{hint && <small className="field-hint">{hint}</small>}</label>
@@ -27,16 +28,16 @@ function OptionEditor({ options, change }: { options: SelectOption[]; change: (o
       <div className="option-card-heading"><strong>Option {index + 1}</strong><button className="icon-button" title="Remove option" onClick={() => change(options.filter((_, i) => i !== index))}><Trash2 size={15}/></button></div>
       <Field label="Label"><input value={option.label} maxLength={100} onChange={event => update(index, { label: event.target.value })}/></Field>
       <Field label="Value"><input value={option.value} maxLength={100} onChange={event => update(index, { value: event.target.value })}/></Field>
-      <Field label="Description"><input value={option.description || ''} maxLength={100} onChange={event => update(index, { description: event.target.value })}/></Field>
-      <Field label="Emoji"><input value={option.emoji?.name || ''} placeholder="Optional" onChange={event => update(index, { emoji: event.target.value ? { name: event.target.value } : undefined })}/></Field>
-      {option.emoji?.name && <><Field label="Custom emoji ID"><input value={option.emoji.id || ''} placeholder="Leave blank for Unicode emoji" onChange={event => update(index, { emoji: { ...option.emoji!, id: event.target.value || undefined } })}/></Field><Toggle label="Animated emoji" checked={option.emoji.animated} change={value => update(index, { emoji: { ...option.emoji!, animated: value } })}/></>}
-      <Toggle label="Selected by default" checked={option.default} change={value => update(index, { default: value })}/>
+      <details className="optional-fields"><summary>More options</summary><Field label="Description"><input value={option.description || ''} maxLength={100} onChange={event => update(index, { description: event.target.value })}/></Field>
+        <Field label="Emoji"><input value={option.emoji?.name || ''} placeholder="Optional" onChange={event => update(index, { emoji: event.target.value ? { name: event.target.value } : undefined })}/></Field>
+        {option.emoji?.name && <><Field label="Custom emoji ID"><input value={option.emoji.id || ''} placeholder="Leave blank for Unicode emoji" onChange={event => update(index, { emoji: { ...option.emoji!, id: event.target.value || undefined } })}/></Field><Toggle label="Animated emoji" checked={option.emoji.animated} change={value => update(index, { emoji: { ...option.emoji!, animated: value } })}/></>}
+        <Toggle label="Selected by default" checked={option.default} change={value => update(index, { default: value })}/></details>
     </div>)}
     <button className="subtle-button full" disabled={options.length >= 25} onClick={() => change([...options, { label: `Option ${options.length + 1}`, value: `option_${options.length + 1}` }])}><Plus size={15}/> Add option</button>
   </section>
 }
 
-export default function Inspector({ node, change, attach, remove, addChild, openSymbols }: Props) {
+export default function Inspector({ node, change, attach, remove, addChild, openSymbols, keybindings }: Props) {
   if (!node) return null
   const patch = (value: Partial<Node>) => change({ ...node, ...value })
   const isSelect = SELECT_TYPES.includes(node.type)
@@ -44,7 +45,7 @@ export default function Inspector({ node, change, attach, remove, addChild, open
     <div className="inspector-title"><div><span className="eyebrow">PROPERTIES</span><h2>{TYPE_NAMES[node.type]}</h2></div><button className="icon-button danger" title="Delete component" onClick={remove}><Trash2 size={18}/></button></div>
     <div className="inspector-intro">{node.type === 9 ? 'Pair one to three text blocks with a thumbnail or button.' : node.type === 17 ? 'Group components with an optional accent.' : node.type === 1 ? 'A row holds up to five buttons or one select.' : 'Changes appear in the preview immediately.'}</div>
     <section className="inspector-section">
-      {node.type === 10 && <><div className="text-tools"><span className="eyebrow">TEXT</span><button className="subtle-button" onClick={openSymbols}><ScanText size={15}/> Symbols</button></div><Field label="Markdown content" hint="Ctrl+B bold · Ctrl+I italic · Discord markdown supported."><textarea id="content-editor" className="field-textarea" rows={11} value={node.content || ''} onChange={event => patch({ content: event.target.value })} onKeyDown={event => { if (!(event.ctrlKey || event.metaKey) || event.altKey || !['b', 'i'].includes(event.key.toLowerCase())) return; event.preventDefault(); const marker = event.key.toLowerCase() === 'b' ? '**' : '*'; const field = event.currentTarget; const start = field.selectionStart; const end = field.selectionEnd; const content = node.content || ''; patch({ content: content.slice(0, start) + marker + content.slice(start, end) + marker + content.slice(end) }); requestAnimationFrame(() => { field.focus(); field.setSelectionRange(start + marker.length, end + marker.length) }) }}/></Field></>}
+      {node.type === 10 && <TextEditor content={node.content || ''} change={content => patch({ content })} openSymbols={openSymbols} keybindings={keybindings}/>}
       {node.type === 17 && <>
         <Field label="Accent color"><div className="color-field"><input type="color" value={`#${(node.accent_color ?? 0x5865f2).toString(16).padStart(6, '0')}`} onChange={event => patch({ accent_color: parseInt(event.target.value.slice(1), 16) })}/><input value={node.accent_color === undefined ? '' : `#${node.accent_color.toString(16).padStart(6, '0')}`} placeholder="No accent" onChange={event => { const value = event.target.value.replace('#', ''); if (/^[0-9a-f]{6}$/i.test(value)) patch({ accent_color: parseInt(value, 16) }); else if (!value) patch({ accent_color: undefined }) }}/></div></Field>
         <Toggle label="Spoiler container" checked={node.spoiler} change={value => patch({ spoiler: value })}/>
@@ -62,24 +63,24 @@ export default function Inspector({ node, change, attach, remove, addChild, open
       {node.type === 2 && <>
         <Field label="Button style"><select value={node.style ?? 1} onChange={event => { const style = Number(event.target.value); patch({ style, custom_id: style >= 5 ? undefined : node.custom_id || `button_${node.uid.slice(0, 6)}`, url: style === 5 ? node.url || 'https://' : undefined, sku_id: style === 6 ? node.sku_id || '' : undefined }) }}><option value={1}>Primary</option><option value={2}>Secondary</option><option value={3}>Success</option><option value={4}>Danger</option><option value={5}>Link</option><option value={6}>Premium</option></select></Field>
         <Field label="Label"><input maxLength={80} value={node.label || ''} onChange={event => patch({ label: event.target.value })}/></Field>
-        <Field label="Emoji"><input placeholder="Emoji character or custom emoji name" value={node.emoji?.name || ''} onChange={event => patch({ emoji: event.target.value ? { ...node.emoji, name: event.target.value } : undefined })}/></Field>
-        {node.emoji?.name && <><Field label="Custom emoji ID"><input placeholder="Leave blank for Unicode emoji" value={node.emoji.id || ''} onChange={event => patch({ emoji: { ...node.emoji!, id: event.target.value || undefined } })}/></Field><Toggle label="Animated emoji" checked={node.emoji.animated} change={value => patch({ emoji: { ...node.emoji!, animated: value } })}/></>}
         {node.style === 5 ? <Field label="Link URL"><input type="url" value={node.url || ''} onChange={event => patch({ url: event.target.value })}/></Field> : node.style === 6 ? <Field label="SKU ID"><input value={node.sku_id || ''} onChange={event => patch({ sku_id: event.target.value })}/></Field> : <Field label="Custom ID" hint="Your bot receives this ID when the button is clicked."><input value={node.custom_id || ''} onChange={event => patch({ custom_id: event.target.value })}/></Field>}
-        <Toggle label="Disabled" checked={node.disabled} change={value => patch({ disabled: value })}/>
+        <details className="optional-fields"><summary>More options</summary><Field label="Emoji"><input placeholder="Emoji character or custom emoji name" value={node.emoji?.name || ''} onChange={event => patch({ emoji: event.target.value ? { ...node.emoji, name: event.target.value } : undefined })}/></Field>
+          {node.emoji?.name && <><Field label="Custom emoji ID"><input placeholder="Leave blank for Unicode emoji" value={node.emoji.id || ''} onChange={event => patch({ emoji: { ...node.emoji!, id: event.target.value || undefined } })}/></Field><Toggle label="Animated emoji" checked={node.emoji.animated} change={value => patch({ emoji: { ...node.emoji!, animated: value } })}/></>}
+          <Toggle label="Disabled" checked={node.disabled} change={value => patch({ disabled: value })}/></details>
       </>}
       {isSelect && <>
         <Field label="Custom ID"><input value={node.custom_id || ''} onChange={event => patch({ custom_id: event.target.value })}/></Field>
         <Field label="Placeholder"><input value={node.placeholder || ''} maxLength={150} onChange={event => patch({ placeholder: event.target.value })}/></Field>
         <div className="field-grid"><NumberField label="Minimum" min={0} max={25} value={node.min_values} change={value => patch({ min_values: value })}/><NumberField label="Maximum" min={1} max={25} value={node.max_values} change={value => patch({ max_values: value })}/></div>
         <Toggle label="Disabled" checked={node.disabled} change={value => patch({ disabled: value })}/>
-        {node.type === 8 && <Field label="Channel types" hint="Choose the Discord channel types shown in the menu."><div className="channel-types">{CHANNEL_TYPES.map(type => <label key={type}><input type="checkbox" checked={node.channel_types?.includes(type) || false} onChange={event => patch({ channel_types: event.target.checked ? [...(node.channel_types || []), type] : node.channel_types?.filter(value => value !== type) })}/>{type === 0 ? 'Text' : type === 2 ? 'Voice' : type === 4 ? 'Category' : type === 5 ? 'News' : type === 15 ? 'Forum' : `Type ${type}`}</label>)}</div></Field>}
+        <details className="optional-fields"><summary>More options</summary>{node.type === 8 && <Field label="Channel types" hint="Choose the Discord channel types shown in the menu."><div className="channel-types">{CHANNEL_TYPES.map(type => <label key={type}><input type="checkbox" checked={node.channel_types?.includes(type) || false} onChange={event => patch({ channel_types: event.target.checked ? [...(node.channel_types || []), type] : node.channel_types?.filter(value => value !== type) })}/>{type === 0 ? 'Text' : type === 2 ? 'Voice' : type === 4 ? 'Category' : type === 5 ? 'News' : type === 15 ? 'Forum' : `Type ${type}`}</label>)}</div></Field>}
         {node.type !== 3 && <Field label="Default selections" hint={node.type === 7 ? 'One entry per line: user:ID or role:ID.' : 'One Discord ID per line.'}><textarea rows={3} placeholder={node.type === 7 ? 'user:123456789\nrole:987654321' : 'Discord IDs, one per line'} value={(node.default_values || []).map(value => node.type === 7 ? `${value.type}:${value.id}` : value.id).join('\n')} onChange={event => patch({ default_values: event.target.value.split('\n').map(value => value.trim()).filter(Boolean).map(value => {
           if (node.type === 7) { const [type, id] = value.includes(':') ? value.split(':', 2) : ['user', value]; return { id, type: type === 'role' ? 'role' as const : 'user' as const } }
           return { id: value, type: node.type === 6 ? 'role' as const : node.type === 8 ? 'channel' as const : 'user' as const }
-        }) })}/></Field>}
+        }) })}/></Field>}</details>
       </>}
     </section>
     {node.type === 3 && <OptionEditor options={node.options || []} change={options => patch({ options })}/>}
-    <section className="inspector-section advanced"><div className="section-heading"><strong>Advanced</strong></div><NumberField label="Discord component ID" value={node.apiId} min={0} max={4294967295} change={apiId => patch({ apiId })} hint="Optional. Discord generates an ID if left empty."/></section>
+    <details className="inspector-section advanced"><summary>Advanced</summary><NumberField label="Discord component ID" value={node.apiId} min={0} max={4294967295} change={apiId => patch({ apiId })} hint="Optional. Discord generates an ID if left empty."/></details>
   </div>
 }

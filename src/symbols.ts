@@ -21,6 +21,17 @@ const styledRanges: Record<string, { upper: number; lower: number; digits?: numb
   'Fullwidth': { upper: 0xff21, lower: 0xff41, digits: 0xff10 },
 }
 export const STYLE_NAMES = Object.keys(styledRanges)
+export function plainText(text: string): string {
+  return Array.from(text).map(char => {
+    const code = char.codePointAt(0)!
+    for (const range of Object.values(styledRanges)) {
+      if (code >= range.upper && code < range.upper + 26) return String.fromCharCode(65 + code - range.upper)
+      if (code >= range.lower && code < range.lower + 26) return String.fromCharCode(97 + code - range.lower)
+      if (range.digits && code >= range.digits && code < range.digits + 10) return String.fromCharCode(48 + code - range.digits)
+    }
+    return char
+  }).join('')
+}
 export function styleText(text: string, style: string): string {
   const ranges = styledRanges[style]
   if (!ranges) return text
