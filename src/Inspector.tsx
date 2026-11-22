@@ -1,7 +1,7 @@
-import { ImagePlus, PanelsTopLeft, Plus, Trash2 } from 'lucide-react'
+import { ImagePlus, Plus, ScanText, Trash2 } from 'lucide-react'
 import { CHANNEL_TYPES, SELECT_TYPES, TYPE_NAMES, makeNode, type Media, type Node, type SelectOption } from './model'
 
-type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void }
+type Props = { node?: Node; change: (node: Node) => void; attach: (file: File) => Promise<Media>; remove: () => void; addChild: (type: Node['type']) => void; openSymbols: () => void }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return <label className="field"><span className="field-label">{label}</span>{children}{hint && <small className="field-hint">{hint}</small>}</label>
@@ -36,15 +36,15 @@ function OptionEditor({ options, change }: { options: SelectOption[]; change: (o
   </section>
 }
 
-export default function Inspector({ node, change, attach, remove, addChild }: Props) {
-  if (!node) return <div className="inspector-empty"><div className="empty-icon"><PanelsTopLeft size={26}/></div><h3>Select a component</h3><p>Click anything in the preview or component tree to customize it.</p></div>
+export default function Inspector({ node, change, attach, remove, addChild, openSymbols }: Props) {
+  if (!node) return null
   const patch = (value: Partial<Node>) => change({ ...node, ...value })
   const isSelect = SELECT_TYPES.includes(node.type)
   return <div className="inspector-form">
     <div className="inspector-title"><div><span className="eyebrow">PROPERTIES</span><h2>{TYPE_NAMES[node.type]}</h2></div><button className="icon-button danger" title="Delete component" onClick={remove}><Trash2 size={18}/></button></div>
     <div className="inspector-intro">{node.type === 9 ? 'Pair one to three text blocks with a thumbnail or button.' : node.type === 17 ? 'Group components with an optional accent.' : node.type === 1 ? 'A row holds up to five buttons or one select.' : 'Changes appear in the preview immediately.'}</div>
     <section className="inspector-section">
-      {node.type === 10 && <Field label="Markdown content" hint="Discord markdown, mentions, Unicode and spoilers are supported."><textarea id="content-editor" className="field-textarea" rows={11} value={node.content || ''} onChange={event => patch({ content: event.target.value })}/></Field>}
+      {node.type === 10 && <><div className="text-tools"><span className="eyebrow">TEXT</span><button className="subtle-button" onClick={openSymbols}><ScanText size={15}/> Symbols</button></div><Field label="Markdown content" hint="Ctrl+B bold · Ctrl+I italic · Discord markdown supported."><textarea id="content-editor" className="field-textarea" rows={11} value={node.content || ''} onChange={event => patch({ content: event.target.value })} onKeyDown={event => { if (!(event.ctrlKey || event.metaKey) || event.altKey || !['b', 'i'].includes(event.key.toLowerCase())) return; event.preventDefault(); const marker = event.key.toLowerCase() === 'b' ? '**' : '*'; const field = event.currentTarget; const start = field.selectionStart; const end = field.selectionEnd; const content = node.content || ''; patch({ content: content.slice(0, start) + marker + content.slice(start, end) + marker + content.slice(end) }); requestAnimationFrame(() => { field.focus(); field.setSelectionRange(start + marker.length, end + marker.length) }) }}/></Field></>}
       {node.type === 17 && <>
         <Field label="Accent color"><div className="color-field"><input type="color" value={`#${(node.accent_color ?? 0x5865f2).toString(16).padStart(6, '0')}`} onChange={event => patch({ accent_color: parseInt(event.target.value.slice(1), 16) })}/><input value={node.accent_color === undefined ? '' : `#${node.accent_color.toString(16).padStart(6, '0')}`} placeholder="No accent" onChange={event => { const value = event.target.value.replace('#', ''); if (/^[0-9a-f]{6}$/i.test(value)) patch({ accent_color: parseInt(value, 16) }); else if (!value) patch({ accent_color: undefined }) }}/></div></Field>
         <Toggle label="Spoiler container" checked={node.spoiler} change={value => patch({ spoiler: value })}/>

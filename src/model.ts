@@ -75,26 +75,6 @@ export function exampleProject(): Project {
   return { version: 1, name: 'Welcome message', components: [container] }
 }
 
-export function templateProject(kind: 'announcement' | 'menu' | 'gallery'): Project {
-  if (kind === 'announcement') return exampleProject()
-  if (kind === 'menu') {
-    const title = makeNode(10); title.content = '# Choose your path\nPick an option below to continue.'
-    const row = makeNode(1); row.components = [makeNode(3)]; row.components[0].options = [
-      { label: 'Explore', value: 'explore', description: 'See what is new', emoji: { name: '✨' } },
-      { label: 'Settings', value: 'settings', description: 'Adjust your preferences', emoji: { name: '⚙️' } },
-    ]
-    const container = makeNode(17); container.accent_color = 0x57f287; container.components = [title, row]
-    return { version: 1, name: 'Interactive menu', components: [container] }
-  }
-  const heading = makeNode(10); heading.content = '# Gallery\nA place for your favorite moments.'
-  const gallery = makeNode(12); gallery.items = [
-    { media: { url: '' }, description: 'Describe the first image' },
-    { media: { url: '' }, description: 'Describe the second image' },
-  ]
-  const caption = makeNode(10); caption.content = '-# Add image URLs or attach local files in the inspector.'
-  return { version: 1, name: 'Media gallery', components: [heading, gallery, caption] }
-}
-
 export function walk(nodes: Node[], visit: (node: Node) => void): void {
   for (const node of nodes) {
     visit(node)

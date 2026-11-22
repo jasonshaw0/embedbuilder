@@ -8,3 +8,49 @@
 .discord-mention{background:#5865f245;color:#c3c9ff;border-radius:3px;padding:0 2px;font-weight:600}.discord-stage.light .discord-mention{color:#4752c4}
 .discord-container{overflow:visible}.discord-select{cursor:pointer}.discord-select.disabled{cursor:default}.select-popover{position:absolute;z-index:12;left:0;right:0;top:calc(100% + 5px);border:1px solid #141519;background:#222327;border-radius:5px;padding:5px;box-shadow:0 8px 22px #0007;max-height:210px;overflow:auto;color:#e9eaef}.discord-stage.light .select-popover{background:#fff;border-color:#dedfe3;color:#313338;box-shadow:0 8px 22px #0002}.select-option{min-height:37px;display:flex;align-items:center;gap:9px;padding:5px 8px;border-radius:3px;font-size:12px;line-height:1.3}.select-option:hover{background:#5865f242}.select-option>span:nth-child(2){flex:1}.select-option strong,.select-option small{display:block}.select-option small{font-size:10px;color:var(--d-muted);margin-top:2px}.select-option.select-dynamic{color:var(--d-muted);font-size:11px}.option-check{color:#87e0b5}
 .discord-emoji{width:1.2em;height:1.2em;vertical-align:-.25em;object-fit:contain}.discord-timestamp{background:#5865f23d;color:#b7c1ff;border-radius:3px;padding:0 2px}.discord-stage.light .discord-timestamp{color:#4752c4}
+
+/* Single, resizable editing rail and an independently scrolling canvas. */
+.app-shell{height:100dvh;min-height:0}
+.workspace{display:flex;min-height:0;overflow:hidden}
+.sidebar{width:390px;min-width:310px;max-width:60vw;flex:0 0 auto;resize:horizontal;overflow:auto;position:relative}
+.sidebar-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;min-height:65px;padding:10px 16px;background:#191c23;border-bottom:1px solid #30343e}
+.sidebar-top input{min-width:0;flex:1;background:transparent;border:1px solid transparent;border-radius:6px;color:#f0f1f5;font-size:15px;font-weight:600;padding:7px 6px}
+.sidebar-top input:focus,.sidebar-top input:hover{outline:none;border-color:#444a59}
+.sidebar-top-actions{display:flex;align-items:center;gap:3px;flex:none}
+.sidebar-top-actions .secondary-button{height:33px}
+.sidebar-body{padding:19px 16px 40px}
+.tree{margin-bottom:12px}
+.add-wrap{position:relative;margin:0 6px 20px}
+.add-button{width:100%;justify-content:flex-start}
+.add-popover{position:relative;z-index:4;margin-top:7px;background:#22262f;border:1px solid #424958;border-radius:9px;box-shadow:0 12px 28px #0005;max-height:340px;overflow:auto;padding:9px 5px}
+.add-popover .palette-label{margin:10px 10px 4px}
+.add-popover button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;background:none;border:0;border-radius:5px;color:#d9deea;text-align:left}
+.add-popover button:hover{background:#343a4b}
+.add-popover button span:last-child{display:flex;align-items:baseline;gap:8px;min-width:0}
+.add-popover button strong{font-size:12px;font-weight:600;white-space:nowrap}
+.add-popover button small{font-size:10px;color:#8f98aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.selected-editor{border-top:1px solid #343944;margin:0 6px}
+.selected-editor .inspector-form{padding:22px 2px 20px}
+.inspector-intro{margin:10px 0 17px}
+.text-tools{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.text-tools .subtle-button{height:30px;font-size:11px}
+.main-panel{flex:1;min-width:0;min-height:0;overflow:hidden}
+.canvas-toolbar{height:58px;justify-content:flex-end;padding:0 24px}
+.canvas-scroller{overflow-y:auto;overflow-x:hidden;min-height:0;flex:1;overscroll-behavior:contain}
+.canvas-backdrop{margin:24px auto 0}
+.canvas-bottom{display:block}
+.discord-stage:not(.mobile){width:min(100%,840px);min-width:min(360px,100%);resize:horizontal;overflow:auto}
+.symbol-modal,.json-modal,.welcome-modal{background:#1d2027;border:1px solid #383d49;border-radius:12px;box-shadow:0 24px 80px #0009;display:flex;flex-direction:column;max-height:90dvh;overflow:hidden}
+.symbol-modal{width:min(580px,100%)}
+.symbol-modal-body{overflow:auto;padding:0 20px 22px}
+.symbol-modal .symbol-grid{grid-template-columns:repeat(8,1fr)}
+.symbol-modal .style-tool{margin-top:18px}
+.json-modal{width:min(900px,100%);min-width:min(520px,100%);min-height:380px;resize:both;overflow:auto}
+.json-modal textarea{flex:1;min-height:210px;margin:0 23px;width:calc(100% - 46px);resize:vertical;background:#12151b;border:1px solid #3b4050;border-radius:7px;color:#dce4f2;padding:14px;font:12px/1.55 Consolas,monospace;outline:none}
+.json-modal textarea:focus{border-color:#7780ee}
+.json-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 23px}
+.action-spacer{flex:1}
+.welcome-modal{width:min(460px,100%);padding-bottom:22px}
+.welcome-modal p{font-size:13px;line-height:1.55;color:#aab2c1;margin:0 23px 12px}
+@media(max-width:900px){.workspace{display:block}.sidebar{width:100%;min-width:0;max-width:none;resize:none}.sidebar,.main-panel{display:none;height:100%}.sidebar.mobile-visible,.main-panel.mobile-visible{display:flex;flex-direction:column}.sidebar.mobile-visible{display:block}.sidebar-body{overflow:visible;flex:none}.canvas-toolbar{height:58px}.canvas-backdrop{margin-top:18px}.canvas-bottom{margin-bottom:24px}.mobile-nav{height:54px}}
+@media(max-width:560px){.sidebar-top{padding:8px 10px}.sidebar-body{padding:15px 10px 30px}.symbol-modal .symbol-grid{grid-template-columns:repeat(6,1fr)}.json-modal{min-width:0;resize:none}.json-actions .action-spacer{display:none}.json-actions button{flex:1}.canvas-toolbar{padding:0 12px}}
